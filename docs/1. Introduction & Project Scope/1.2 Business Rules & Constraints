@@ -1,1 +1,55 @@
+*Business Rules & Constraints:
 
+The following business rules and constraints define how the database operates:
+
+1.Warehouse Management
+-Each warehouse must have a unique warehouse ID.
+-A warehouse stores one or more inventory items.
+-The same product can be stored in multiple warehouses.
+-The quantity of a product is managed separately for each warehouse.
+
+2.Product & Inventory Management
+-Each product must have a unique product ID.
+-Inventory quantity cannot be negative.
+-Each inventory record represents the quantity of a specific product in a specific warehouse.
+-Each product may have a predefined reorder level.
+-When the inventory quantity falls below the reorder level, a restock alert should be generated.
+
+3.Supplier Management
+-Each supplier must have a unique supplier ID.
+-A supplier can provide multiple products.
+-A product may be supplied by multiple suppliers.
+
+4.Supplier Orders
+-Each supplier order must belong to one supplier.
+-Each order can contain multiple products.
+-The ordered quantity must be greater than zero.
+-An order should have a status such as Pending, Confirmed, Shipped, or Completed.
+
+5.Shipment Tracking
+-Each shipment must have a unique shipment ID.
+-A shipment is associated with an order or logistics transaction.
+-Shipment information should include relevant tracking details, shipment status, origin, destination, and shipment date.
+-Shipment status must follow predefined valid values.
+
+6.Product Components / Recursive Relationship
+-A product may consist of one or more sub-components.
+-A sub-component may itself consist of other sub-components.
+-The database must support multiple levels of component–sub-component relationships.
+-A product cannot be defined as a component of itself.
+
+7.Inventory Quantity & Restock Alerts
+-Inventory quantities must be updated when relevant goods are received or dispatched.
+-Inventory quantity must never become negative.
+-When the quantity falls below the reorder level, the system should automatically create or update a restock alert through a database trigger.
+
+8.Data Integrity
+-Primary keys must uniquely identify records.
+-Foreign keys must ensure valid relationships between related tables.
+-Required attributes cannot contain NULL values.
+-Appropriate CHECK and UNIQUE constraints should be applied to prevent invalid or duplicate data.
+
+9.Security
+-Database users should have different permissions according to their roles.
+-Users should only be allowed to perform operations necessary for their responsibilities.
+-Sensitive operations such as deleting or modifying critical data should be restricted.
