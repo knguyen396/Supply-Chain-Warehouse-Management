@@ -2,54 +2,23 @@
 
 The following business rules and constraints define how the database operates:
 
-1.Warehouse Management
--Each warehouse must have a unique warehouse ID.
--A warehouse stores one or more inventory items.
--The same product can be stored in multiple warehouses.
--The quantity of a product is managed separately for each warehouse.
+1.Inventory & Warehouse Constraints:
 
-2.Product & Inventory Management
--Each product must have a unique product ID.
--Inventory quantity cannot be negative.
--Each inventory record represents the quantity of a specific product in a specific warehouse.
--Each product may have a predefined reorder level.
--When the inventory quantity falls below the reorder level, a restock alert should be generated.
+-BR-101: A warehouse must have a unique identifier (warehouse_id) and a defined storage capacity. 
+-BR-102: A product can be stored in zero or multiple warehouses. The quantity_on_hand in any warehouse cannot be negative (quantity_on_hand >= 0). 
+-BR-103 (Restock Constraint): When quantity_on_hand in a warehouse drops below the product's min_reorder_level, the system marks the item for restocking.
 
-3.Supplier Management
--Each supplier must have a unique supplier ID.
--A supplier can provide multiple products.
--A product may be supplied by multiple suppliers.
+2.Bill of Materials (BOM) & Recursive Assembly Rules:
+-BR-201 (Recursive Structure): A product can be composed of multiple child components, and a child component can belong to multiple parent products. 
+-BR-202 (Self-Referential Integrity): A product cannot be its own parent or child component directly or transitively (No cyclic references allowed).
+-BR-203: The quantity_required for any component in a product structure must be strictly greater than zero (quantity_required > 0). 
 
-4.Supplier Orders
--Each supplier order must belong to one supplier.
--Each order can contain multiple products.
--The ordered quantity must be greater than zero.
--An order should have a status such as Pending, Confirmed, Shipped, or Completed.
+3.Supplier Order & Purchasing Rules:
+-BR-301: A supplier order must be associated with exactly one valid registered supplier. 
+-BR-302: An order can contain multiple line items (SupplierOrderDetail). The order_quantity must be greater than zero. 
+-BR-303: Order status must follow strict transition states: Pending → Completed or Canceled.
 
-5.Shipment Tracking
--Each shipment must have a unique shipment ID.
--A shipment is associated with an order or logistics transaction.
--Shipment information should include relevant tracking details, shipment status, origin, destination, and shipment date.
--Shipment status must follow predefined valid values.
-
-6.Product Components / Recursive Relationship
--A product may consist of one or more sub-components.
--A sub-component may itself consist of other sub-components.
--The database must support multiple levels of component–sub-component relationships.
--A product cannot be defined as a component of itself.
-
-7.Inventory Quantity & Restock Alerts
--Inventory quantities must be updated when relevant goods are received or dispatched.
--Inventory quantity must never become negative.
--When the quantity falls below the reorder level, the system should automatically create or update a restock alert through a database trigger.
-
-8.Data Integrity
--Primary keys must uniquely identify records.
--Foreign keys must ensure valid relationships between related tables.
--Required attributes cannot contain NULL values.
--Appropriate CHECK and UNIQUE constraints should be applied to prevent invalid or duplicate data.
-
-9.Security
--Database users should have different permissions according to their roles.
--Users should only be allowed to perform operations necessary for their responsibilities.
--Sensitive operations such as deleting or modifying critical data should be restricted.
+4.Shipment & Logistics Rules:
+-BR-401: A shipment must specify a valid source warehouse (source_warehouse_id) and destination warehouse (dest_warehouse_id). 
+-BR-402: The source warehouse and destination warehouse of a shipment cannot be the same (source_warehouse_id != dest_warehouse_id).
+-BR-403: Estimated arrival time (estimated_arrival) must be greater than or equal to the dispatch time (dispatch_date).
