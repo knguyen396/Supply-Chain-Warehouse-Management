@@ -1,18 +1,10 @@
-- Problem statement:
-The Supply Chain & Warehouse Logistics Network requires a centralized database to manage inventory across multiple warehouses, suppliers, supplier orders, and shipments. The system must track product quantities and locations, manage supplier orders and shipment status, and support recursive relationships where products consist of other sub-components. It must also maintain accurate inventory levels and automatically generate restock alerts when quantities fall below predefined reorder levels. The database should ensure data integrity, consistency, efficient data management, and secure access to supply chain information.
+The primary objective of the Supply Chain & Warehouse Logistics Network Management System is to provide a centralized, 
+robust relational database platform to track inventory across multiple geographically distributed warehouses, manage supplier purchasing workflows, 
+monitor multi-stage shipment logistics, and support multi-level component assembly operations. 
 
+Specifically, the system addresses key operational capabilities:
 
-- System Objective:
-
-The main objective of the system is to develop a centralized relational database for managing supply chain and warehouse logistics operations.
-The system is designed to:
--Manage multiple warehouses located in different geographical locations.
--Store and manage information about inventory items and their quantities in each warehouse.
--Manage supplier information and supplier orders.
--Track shipments and the movement of goods through the supply chain.
--Represent recursive relationships where a product or component can consist of other sub-components.
--Monitor inventory quantities and automatically identify items that fall below their reorder levels.
--Generate restock alerts to support timely inventory replenishment.
--Maintain data accuracy and consistency through primary keys, foreign keys, constraints, and triggers.
--Support efficient data retrieval through appropriate queries, views, and indexes.
--Provide role-based access control to protect sensitive database operations.
+-Multi-Warehouse Inventory Visibility: Tracking real-time stock levels of products across different physical locations. 
+-Automated Restock Threshold Tracking: Monitoring stock levels against predefined minimum reorder thresholds to trigger inventory replenishment. 
+-Bill of Materials (BOM) Management: Supporting recursive structures where complex products are assembled from sub-components. 
+-End-to-End Logistics Tracking: Managing supplier purchase orders and tracking shipments between source and destination warehouses. 
