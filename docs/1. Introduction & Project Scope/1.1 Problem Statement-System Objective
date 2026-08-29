@@ -1,6 +1,6 @@
-The primary objective of the Supply Chain & Warehouse Logistics Network Management System is to provide a centralized, 
-robust relational database platform to track inventory across multiple geographically distributed warehouses, manage supplier purchasing workflows, 
-monitor multi-stage shipment logistics, and support multi-level component assembly operations. 
+ 1.1 System Objective: 
+
+The primary objective of the Supply Chain & Warehouse Logistics Network Management System is to provide a centralized, robust relational database platform to track inventory across multiple geographically distributed warehouses, manage supplier purchasing workflows, monitor multi-stage shipment logistics, and support multi-level component assembly operations. 
 
 Specifically, the system addresses key operational capabilities:
 
@@ -8,3 +8,19 @@ Specifically, the system addresses key operational capabilities:
 -Automated Restock Threshold Tracking: Monitoring stock levels against predefined minimum reorder thresholds to trigger inventory replenishment. 
 -Bill of Materials (BOM) Management: Supporting recursive structures where complex products are assembled from sub-components. 
 -End-to-End Logistics Tracking: Managing supplier purchase orders and tracking shipments between source and destination warehouses. 
+
+1.2 User Requirements vs. System Capabilities (ISO 29148):
+
+A. User Requirements (UR)
+
+-UR-01 (Warehouse Manager): The Warehouse Manager must be able to view inventory balances across all physical warehouses and record stock movements. 
+-UR-02 (Procurement Specialist): The Procurement Specialist must be able to create purchase orders for suppliers when product stock falls below minimum thresholds. 
+-UR-03 (Logistics Coordinator): The Logistics Coordinator must be able to dispatch shipments between warehouses and update arrival statuses. 
+-UR-04 (Assembly/Production Supervisor): The Assembly Supervisor must be able to inspect product structures to identify sub-components required for assembling higher-level finished goods. 
+
+B. System Capabilities (SC)
+
+-SC-01 (Data-Centric Inventory Control): The system shall maintain an accurate quantity_on_hand for every product-warehouse pair. 
+-SC-02 (Automated Restock Alerting): The system shall evaluate stock balances against min_reorder_level and raise alerts when stock is depleted. 
+-SC-03 (Recursive BOM Traversal): The system shall support recursive relationships allowing arbitrary depths of component-subcomponent relationships. 
+-SC-04 (Audit & Status Tracking): The system shall track status updates (Pending, Completed, Canceled, In-Transit) for purchase orders and shipments. 
