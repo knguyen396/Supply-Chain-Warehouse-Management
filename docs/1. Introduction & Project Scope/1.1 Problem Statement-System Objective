@@ -1,4 +1,4 @@
- 1.1 System Objective: 
+ 1. System Objective: 
 
 The primary objective of the Supply Chain & Warehouse Logistics Network Management System is to provide a centralized, robust relational database platform to track inventory across multiple geographically distributed warehouses, manage supplier purchasing workflows, monitor multi-stage shipment logistics, and support multi-level component assembly operations. 
 
@@ -9,7 +9,7 @@ Specifically, the system addresses key operational capabilities:
 -Bill of Materials (BOM) Management: Supporting recursive structures where complex products are assembled from sub-components. 
 -End-to-End Logistics Tracking: Managing supplier purchase orders and tracking shipments between source and destination warehouses. 
 
-1.2 User Requirements vs. System Capabilities (ISO 29148):
+2. User Requirements vs. System Capabilities (ISO 29148):
 
 A. User Requirements (UR)
 
