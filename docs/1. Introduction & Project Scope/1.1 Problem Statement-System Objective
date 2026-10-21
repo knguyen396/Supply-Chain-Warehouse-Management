@@ -21,6 +21,6 @@ A. User Requirements (UR)
 B. System Capabilities (SC)
 
 -SC-01 (Data-Centric Inventory Control): The system shall maintain an accurate quantity_on_hand for every product-warehouse pair. 
--SC-02 (Automated Restock Alerting): The system shall evaluate stock balances against min_reorder_level and raise alerts when stock is depleted. 
+-SC-02 (Automated Restock Alerting): The system shall evaluate stock balances against min_reorder_level and raise alerts when quantity_on_hand falls below min_reorder_level.
 -SC-03 (Recursive BOM Traversal): The system shall support recursive relationships allowing arbitrary depths of component-subcomponent relationships. 
--SC-04 (Audit & Status Tracking): The system shall track status updates (Pending, Completed, Canceled, In-Transit) for purchase orders and shipments. 
+-SC-04 (Audit & Status Tracking): The system shall track status updates for supplier orders and shipments. Supplier orders shall use the statuses Pending, Completed, and Canceled, while shipments shall use the statuses Pending, In-Transit, Completed, and Canceled.
