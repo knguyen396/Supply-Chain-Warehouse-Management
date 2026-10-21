@@ -6,19 +6,22 @@ The following business rules and constraints define how the database operates:
 
 -BR-101: A warehouse must have a unique identifier (warehouse_id) and a defined storage capacity. 
 -BR-102: A product can be stored in zero or multiple warehouses. The quantity_on_hand in any warehouse cannot be negative (quantity_on_hand >= 0). 
--BR-103 (Restock Constraint): When quantity_on_hand in a warehouse drops below the product's min_reorder_level, the system marks the item for restocking.
+-BR-103 (Restock Constraint): When quantity_on_hand for a product in a warehouse drops below the product's min_reorder_level, the system shall create a restock alert.
 
 2.Bill of Materials (BOM) & Recursive Assembly Rules:
--BR-201 (Recursive Structure): A product can be composed of multiple child components, and a child component can belong to multiple parent products. 
+-BR-201 (Recursive Structure): A product can be composed of multiple child components, and a child component can belong to multiple parent products. A product may simultaneously act as both a parent product and a child component at different levels of the product structure.
 -BR-202 (Self-Referential Integrity): A product cannot be its own parent or child component directly or transitively (No cyclic references allowed).
 -BR-203: The quantity_required for any component in a product structure must be strictly greater than zero (quantity_required > 0). 
 
 3.Supplier Order & Purchasing Rules:
 -BR-301: A supplier order must be associated with exactly one valid registered supplier. 
 -BR-302: An order can contain multiple line items (SupplierOrderDetail). The order_quantity must be greater than zero. 
--BR-303: Order status must follow strict transition states: Pending → Completed or Canceled.
+-BR-303: The unit_price in SupplierOrderDetail represents the actual purchase price of the product for that specific supplier order and may differ from the unit_price recorded in Product.
+-BR-304: Shipment status shall follow the allowed states Pending, In-Transit, Completed, or Canceled. A shipment may transition from Pending to In-Transit, and from In-Transit to Completed. A pending shipment may also be Canceled.
 
 4.Shipment & Logistics Rules:
 -BR-401: A shipment must specify a valid source warehouse (source_warehouse_id) and destination warehouse (dest_warehouse_id). 
 -BR-402: The source warehouse and destination warehouse of a shipment cannot be the same (source_warehouse_id != dest_warehouse_id).
 -BR-403: Estimated arrival time (estimated_arrival) must be greater than or equal to the dispatch time (dispatch_date).
+-BR-404: (Inventory Transfer): When a shipment is completed, the system shall decrease the quantity_on_hand of each shipped product in the source warehouse by the shipped quantity and increase the quantity_on_hand of the same product in the destination warehouse by the shipped quantity.
+-BR-405 (Shipment Quantity Constraint): A shipment cannot be completed if the source warehouse does not have sufficient quantity_on_hand for the shipped product.
