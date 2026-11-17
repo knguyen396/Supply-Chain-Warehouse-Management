@@ -17,13 +17,13 @@ The following business rules and constraints define how the database operates:
 -BR-301: A supplier order must be associated with exactly one valid registered supplier. 
 -BR-302: An order can contain multiple line items (SupplierOrderDetail). The order_quantity must be greater than zero. 
 -BR-303: The unit_price in SupplierOrderDetail represents the actual purchase price of the product for that specific supplier order and may differ from the unit_price recorded in Product.
--BR-304 (Order Total Consistency):** The total_amount of a supplier order shall equal the sum of order_quantity multiplied by unit_price across all associated SupplierOrderDetail records. The system shall maintain consistency when order details are inserted, updated, or deleted.
--BR-305 (Supplier Order Status):** Supplier order status shall be restricted to Pending, Completed, or Canceled. A Pending order may transition to Completed or Canceled.
+-BR-304 (Order Total Consistency): The total_amount of a supplier order shall equal the sum of order_quantity multiplied by unit_price across all associated SupplierOrderDetail records. The system shall maintain consistency when order details are inserted, updated, or deleted.
+-BR-305 (Supplier Order Status): Supplier order status shall be restricted to Pending, Completed, or Canceled. A Pending order may transition to Completed or Canceled.
 
 4.Shipment & Logistics Rules:
 -BR-401: A shipment must specify a valid source warehouse (source_warehouse_id) and destination warehouse (dest_warehouse_id). 
 -BR-402: The source warehouse and destination warehouse of a shipment cannot be the same (source_warehouse_id != dest_warehouse_id).
 -BR-403: Estimated arrival time (estimated_arrival) must be greater than or equal to the dispatch time (dispatch_date).
--BR-404: (Inventory Transfer): When a shipment is completed, the system shall decrease the quantity_on_hand of each shipped product in the source warehouse by the shipped quantity and increase the quantity_on_hand of the same product in the destination warehouse by the shipped quantity.
+-BR-404 (Inventory Transfer): When a shipment is completed, the system shall decrease the quantity_on_hand of each shipped product in the source warehouse by the shipped quantity and increase the quantity_on_hand of the same product in the destination warehouse by the shipped quantity.
 -BR-405 (Shipment Quantity Constraint): A shipment cannot be completed if the source warehouse does not have sufficient quantity_on_hand for the shipped product.
 -BR-406: Shipment status shall follow the allowed states Pending, In-Transit, Completed, or Canceled. A shipment may transition from Pending to In-Transit, and from In-Transit to Completed. A pending shipment may also be Canceled.
