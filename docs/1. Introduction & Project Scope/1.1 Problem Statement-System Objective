@@ -24,3 +24,17 @@ B. System Capabilities (SC)
 -SC-02 (Automated Restock Alerting): The system shall evaluate stock balances against min_reorder_level and raise alerts when quantity_on_hand falls below min_reorder_level.
 -SC-03 (Recursive BOM Traversal): The system shall support recursive relationships allowing arbitrary depths of component-subcomponent relationships. 
 -SC-04 (Audit & Status Tracking): The system shall track status updates for supplier orders and shipments. Supplier orders shall use the statuses Pending, Completed, and Canceled, while shipments shall use the statuses Pending, In-Transit, Completed, and Canceled.
+
+C. Non-Functional Requirements (NFR)
+
+-NFR-01 (Data Integrity):** The system shall enforce primary key, foreign key, uniqueness, and domain constraints to maintain consistency across all database tables.
+
+-NFR-02 (Transaction Reliability):** Inventory transfers between warehouses shall be executed as atomic transactions. If any operation fails, the transaction shall be rolled back to prevent inconsistent inventory quantities.
+
+-NFR-03 (Performance):** The system shall support efficient retrieval of inventory, supplier orders, and shipment information through appropriate indexing and query optimization. Query performance shall be evaluated using a representative test dataset.
+
+-NFR-04 (Security):** The system shall restrict database modification operations to authorized users and use parameterized queries to prevent SQL injection attacks.
+
+-NFR-05 (Maintainability):** Database tables, attributes, constraints, and SQL scripts shall follow consistent naming conventions to improve readability and maintainability.
+
+-NFR-06 (Backup and Recovery):** The system shall support database backup and restoration procedures to reduce the risk of data loss.
