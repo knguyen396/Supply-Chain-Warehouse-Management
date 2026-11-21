@@ -4,9 +4,9 @@ The following business rules and constraints define how the database operates:
 
 1.Inventory & Warehouse Constraints:
 
--BR-101: A warehouse must have a unique identifier (warehouse_id) and a defined storage capacity. 
+-BR-101: A warehouse must have a unique identifier (warehouse_id) and a defined storage capacity and capacity > 0.
 -BR-102: A product can be stored in zero or multiple warehouses. The quantity_on_hand in any warehouse cannot be negative (quantity_on_hand >= 0). 
--BR-103 (Restock Constraint): When quantity_on_hand for a product in a warehouse drops below the product's min_reorder_level, the system shall create a restock alert.
+-BR-103 (Restock Constraint): When quantity_on_hand for a product in a warehouse drops below the product's min_reorder_level, the system shall create a restock alert with an initial status of Pending.
 
 2.Bill of Materials (BOM) & Recursive Assembly Rules:
 -BR-201 (Recursive Structure): A product can be composed of multiple child components, and a child component can belong to multiple parent products. A product may simultaneously act as both a parent product and a child component at different levels of the product structure.
@@ -27,3 +27,4 @@ The following business rules and constraints define how the database operates:
 -BR-404 (Inventory Transfer): When a shipment is completed, the system shall decrease the quantity_on_hand of each shipped product in the source warehouse by the shipped quantity and increase the quantity_on_hand of the same product in the destination warehouse by the shipped quantity.
 -BR-405 (Shipment Quantity Constraint): A shipment cannot be completed if the source warehouse does not have sufficient quantity_on_hand for the shipped product.
 -BR-406: Shipment status shall follow the allowed states Pending, In-Transit, Completed, or Canceled. A shipment may transition from Pending to In-Transit, and from In-Transit to Completed. A pending shipment may also be Canceled.
+-BR-407: (Restock Alert Status): A restock alert shall have one of two statuses: Pending or Resolved. A newly created alert shall have the status Pending. The status may be changed to Resolved when the alert has been handled.
