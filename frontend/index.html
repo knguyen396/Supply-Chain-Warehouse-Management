@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kho vận G3</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <script type="module" src="/assets/app.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <a class="skip-link" href="#main-content">Đến nội dung chính</a>
+    <header class="site-header">
+      <div class="top">
+        <a href="#dashboard" class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10 12 4l9 6v10H3zM8 20v-8h8v8M8 16h8"/></svg>
+          </span>
+          <span>Kho vận G3<small>Quản lý chuỗi cung ứng</small></span>
+        </a>
+        <a class="api-link" href="/docs" target="_blank" rel="noopener">Tài liệu API</a>
+      </div>
+      <div class="menu-bar">
+        <nav id="navigation" aria-label="Menu chính"></nav>
+      </div>
+    </header>
+    <main id="main-content" tabindex="-1">
+      <div class="content">
+        <div class="page-heading">
+          <div><h1 id="page-title"></h1><p id="page-description"></p></div>
+          <div class="heading-actions">
+            <div id="dashboard-shortcuts" hidden>
+              <a class="secondary" href="#inventory">Xem tồn kho</a>
+              <a class="primary" href="#shipments">Quản lý chuyển kho</a>
+            </div>
+            <button type="button" class="primary" id="page-action" hidden></button>
+          </div>
+        </div>
+        <section id="screen" aria-label="Nội dung chính"></section>
+      </div>
+    </main>
+  </div>
+  <dialog id="modal">
+    <div class="modal-header"><h2 id="modal-title"></h2><button type="button" id="modal-close" aria-label="Đóng">×</button></div>
+    <div id="modal-content"></div>
+  </dialog>
+  <div id="notice" role="status" aria-live="polite"></div>
+</body>
+</html>
