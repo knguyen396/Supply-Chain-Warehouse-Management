@@ -4,6 +4,10 @@ const modal = find("#modal");
 const modalContent = find("#modal-content");
 const pageAction = find("#page-action");
 const dashboardShortcuts = find("#dashboard-shortcuts");
+let account = null;
+const roleLabels = { admin: "Quản trị viên", warehouse: "Nhân viên kho", procurement: "Nhân viên mua hàng", logistics: "Nhân viên vận chuyển" };
+const canRead = (key) => account?.read.includes(key);
+const canWrite = (key) => account?.write.includes(key);
 const number = new Intl.NumberFormat("vi-VN");
 const currency = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 2 });
 const shipmentStates = ["Pending", "In-Transit", "Completed", "Canceled"];
@@ -20,7 +24,8 @@ const headings = {
   suppliers: ["Nhà cung cấp", "Quản lý thông tin liên hệ và xem các đơn nhập liên quan."],
   orders: ["Đơn nhập hàng", "Tạo đơn nháp, thêm sản phẩm và theo dõi tổng tiền."],
   shipments: ["Chuyển kho", "Tạo chuyến và theo dõi hàng đi giữa các kho."],
-  alerts: ["Cảnh báo nhập hàng", "Kiểm tra các mặt hàng dưới ngưỡng nhập và xử lý cảnh báo."]
+  alerts: ["Cảnh báo nhập hàng", "Kiểm tra các mặt hàng dưới ngưỡng nhập và xử lý cảnh báo."],
+  users: ["Tài khoản", "Tạo tài khoản và gán vai trò cho từng người dùng."]
 };
 const iconPaths = [
   "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
@@ -67,9 +72,9 @@ function button(label, action, kind = "secondary") {
 }
 
 async function api(path, method = "GET", payload) {
-  const options = { method };
+  const options = { method, headers: { "X-G3-Request": "1" } };
   if (payload !== undefined) {
-    options.headers = { "Content-Type": "application/json" };
+    options.headers["Content-Type"] = "application/json";
     options.body = JSON.stringify(payload);
   }
   const response = await fetch("/api/" + path, options).catch(() => {
@@ -77,7 +82,12 @@ async function api(path, method = "GET", payload) {
   });
   if (response.status === 204) return;
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.detail || "Yêu cầu không thành công.");
+  if (!response.ok) {
+    if (response.status === 401 && account) showLogin("Phiên đăng nhập đã hết hạn.");
+    const error = new Error(body.detail || "Yêu cầu không thành công.");
+    error.status = response.status;
+    throw error;
+  }
   return body;
 }
 
@@ -162,6 +172,7 @@ function makeForm(fields, onSubmit, label = "Lưu") {
       ? selectInput([["", "Chọn " + field.label.toLowerCase()], ...field.options], String(field.value ?? ""))
       : Object.assign(element("input"), { type: field.type || "text", value: field.value ?? "" });
     input.name = field.name;
+    if (field.autocomplete) input.autocomplete = field.autocomplete;
     input.required = !field.optional;
     input.readOnly = Boolean(field.readOnly);
     if (field.maxLength) input.maxLength = field.maxLength;
@@ -250,8 +261,8 @@ async function catalog(key) {
   }
   const columns = [...config.columns, ["Thao tác", (row) => actionCell(
     config.extra(row),
-    button("Sửa", () => edit(row)),
-    button("Xóa", async () => {
+    canWrite(key) && button("Sửa", () => edit(row)),
+    canWrite(key) && button("Xóa", async () => {
       if (!confirm("Xóa " + config.label + " " + row[keyField] + "?")) return;
       await api(key + "/" + encodeURIComponent(row[keyField]), "DELETE");
       notify("Đã xóa bản ghi.");
@@ -259,7 +270,7 @@ async function catalog(key) {
     }, "danger")
   )]];
   return { body: filtered(data, columns, { searchKeys: config.fields.slice(0, 2).map((field) => field.name) }),
-    action: ["Thêm " + config.label, () => edit()] };
+    action: canWrite(key) && ["Thêm " + config.label, () => edit()] };
 }
 
 const alertColumns = [column("Sản phẩm", "product_name"), column("Kho", "warehouse_name"),
@@ -275,7 +286,7 @@ async function dashboard() {
     ["shipments", "Chuyến hàng", 6, "shipments"],
     ["alerts", "Cảnh báo đang mở", 7, "alerts"]
   ];
-  const metrics = element("div", "metrics", metricsConfig.map(([key, label, symbol, page]) =>
+  const metrics = element("div", "metrics", metricsConfig.filter(([key]) => Object.hasOwn(data.metrics, key)).map(([key, label, symbol, page]) =>
     Object.assign(element("a", "metric metric-" + key,
       element("span", "metric-icon", icon(symbol)),
       element("div", "metric-value", element("span", "", label), element("strong", "", formatNumber(data.metrics[key])))),
@@ -292,13 +303,17 @@ async function dashboard() {
     element("div", "", pill(state), element("strong", "", formatNumber(counts.get(state) ?? 0)))));
   return { body: element("div", "", metrics, element("div", "dashboard-grid",
     panel("Tồn kho theo địa điểm", chart, linked("Xem tồn kho", "#inventory")),
-    panel("Trạng thái chuyến hàng", statuses, linked("Xem chuyến hàng", "#shipments"))),
-  panel("Cảnh báo đang mở", table(data.alerts, alertColumns), linked("Tất cả cảnh báo", "#alerts"))) };
+    canRead("shipments") && panel("Trạng thái chuyến hàng", statuses, linked("Xem chuyến hàng", "#shipments"))),
+  canRead("alerts") && panel("Cảnh báo đang mở", table(data.alerts, alertColumns), linked("Tất cả cảnh báo", "#alerts"))) };
 }
 
 async function inventory(initial) {
-  const [data, warehouses, products] = await Promise.all([api("inventory"), api("warehouses"), api("products")]);
-  const warehouseOptions = optionsFor(warehouses, "warehouse_id", "warehouse_name");
+  const [data, warehouses, products] = await Promise.all([
+    api("inventory"), canWrite("inventory") ? api("warehouses") : [],
+    canWrite("inventory") ? api("products") : []
+  ]);
+  const warehouseOptions = canWrite("inventory") ? optionsFor(warehouses, "warehouse_id", "warehouse_name")
+    : [...new Map(optionsFor(data, "warehouse_id", "warehouse_name"))];
   const productOptions = optionsFor(products, "product_id", "product_name");
   function adjust(row) {
     const fields = row
@@ -313,17 +328,18 @@ async function inventory(initial) {
     column("Kho", "warehouse_name"), column("Mã sản phẩm", "product_id"), column("Sản phẩm", "product_name"),
     column("Số lượng", "quantity_on_hand", formatNumber), column("Đơn vị", "unit"),
     column("Ngưỡng nhập", "min_reorder_level", formatNumber), column("Tình trạng", "stock_status", pill),
-    column("Cập nhật", "last_updated", formatDate), ["Thao tác", (row) => button("Điều chỉnh", () => adjust(row))]
+    column("Cập nhật", "last_updated", formatDate),
+    ...(canWrite("inventory") ? [["Thao tác", (row) => button("Điều chỉnh", () => adjust(row))]] : [])
   ], { searchKeys: ["product_id", "product_name"], filters: [
     ["Tất cả kho", "warehouse_id", warehouseOptions, initial],
     ["Tất cả tình trạng", "stock_status", statusOptions(["Low Stock", "Sufficient Stock"])]
-  ] }), action: ["Cập nhật tồn", () => adjust()] };
+  ] }), action: canWrite("inventory") && ["Cập nhật tồn", () => adjust()] };
 }
 
 async function alerts() {
   const data = await api("alerts");
   return { body: filtered(data, [...alertColumns, column("Thời điểm", "alert_date", formatDate),
-    ["Thao tác", (row) => row.status === "Pending" ? button("Đánh dấu đã xử lý", async () => {
+    ["Thao tác", (row) => row.status === "Pending" && canWrite("alerts") ? button("Đánh dấu đã xử lý", async () => {
       await api("alerts/" + encodeURIComponent(row.alert_id) + "/resolve", "PATCH");
       notify("Đã xử lý cảnh báo.");
       await render();
@@ -431,18 +447,63 @@ async function detail(key, recordId) {
   openModal((shipping ? "Chuyến " : "Đơn ") + recordId, element("div", "", header, table(lines, columns), draft && lineEditor));
 }
 
+async function users() {
+  const records = await api("users");
+  const options = Object.entries(roleLabels);
+  const roleField = { name: "role", label: "Vai trò", options };
+  return {
+    body: panel("Danh sách tài khoản", table(records, [
+      column("Tên đăng nhập", "username"), column("Vai trò", "role", (role) => roleLabels[role]),
+      ["Thao tác", (row) => row.user_id === account.user_id ? "Tài khoản của bạn" :
+        button("Đổi vai trò", () => formModal("Đổi vai trò · " + row.username,
+          [{ ...roleField, value: row.role }],
+          (payload) => api("users/" + row.user_id + "/role", "PATCH", payload)))]
+    ])),
+    action: ["Thêm tài khoản", () => formModal("Tạo tài khoản", [
+      textField("username", "Tên đăng nhập", 32),
+      { name: "password", label: "Mật khẩu (ít nhất 12 ký tự)", type: "password", maxLength: 128, autocomplete: "new-password" },
+      roleField
+    ], (payload) => api("users", "POST", payload))]
+  };
+}
+
 const navigation = find("#navigation");
-Object.entries(headings).forEach(([key, [title]], index) => {
-  const link = linked(title, "#" + key);
-  link.prepend(icon(index));
-  navigation.append(link);
-});
+function openWorkspace(user) {
+  account = user;
+  find("#login-screen").hidden = true;
+  find(".layout").hidden = false;
+  find("#account-label").textContent = user.username + " · " + roleLabels[user.role];
+  navigation.replaceChildren();
+  Object.entries(headings).forEach(([key, [title]], index) => {
+    if (!canRead(key) && !(key === "users" && user.role === "admin")) return;
+    const link = linked(title, "#" + key);
+    link.prepend(icon(key === "users" ? 4 : index));
+    navigation.append(link);
+  });
+  render();
+}
+
+function showLogin(message = "") {
+  account = null;
+  if (modal.open) modal.close();
+  screen.replaceChildren();
+  find(".layout").hidden = true;
+  find("#login-screen").hidden = false;
+  const form = makeForm([
+    { ...textField("username", "Tên đăng nhập", 32), autocomplete: "username" },
+    { name: "password", label: "Mật khẩu", type: "password", maxLength: 128, autocomplete: "current-password" }
+  ], async (payload) => openWorkspace(await api("auth/login", "POST", payload)), "Đăng nhập");
+  find(".form-error", form).textContent = message;
+  find("#login-form").replaceChildren(form);
+}
 
 let renderId = 0;
 async function render() {
+  if (!account) return;
   const requestId = ++renderId;
   let [key = "", initial = ""] = location.hash.slice(1).split("/");
   if (!Object.hasOwn(headings, key)) key = "dashboard";
+  if (!canRead(key) && !(key === "users" && account.role === "admin")) key = "dashboard";
   if (!/^[A-Za-z0-9_-]{0,10}$/.test(initial)) initial = "";
   for (const link of navigation.children) {
     if (link.hash === "#" + key) {
@@ -457,12 +518,14 @@ async function render() {
   find("#page-description").textContent = headings[key][1];
   find(".page-heading").classList.toggle("dashboard-heading", key === "dashboard");
   dashboardShortcuts.hidden = key !== "dashboard";
+  find('#dashboard-shortcuts a[href="#shipments"]').hidden = !canRead("shipments");
   pageAction.hidden = true;
   screen.setAttribute("aria-busy", "true");
   screen.replaceChildren(element("div", "panel state", "Đang tải dữ liệu…"));
   try {
     const view = await (key === "dashboard" ? dashboard() : key === "inventory" ? inventory(initial)
-      : key === "alerts" ? alerts() : key === "orders" || key === "shipments" ? workflow(key, initial) : catalog(key));
+      : key === "alerts" ? alerts() : key === "users" ? users()
+      : key === "orders" || key === "shipments" ? workflow(key, initial) : catalog(key));
     if (requestId !== renderId) return;
     screen.replaceChildren(view.body);
     if (view.action) {
@@ -486,4 +549,12 @@ window.addEventListener("hashchange", () => {
   if (modal.open) modal.close();
   render();
 });
-render();
+find("#logout").addEventListener("click", async () => {
+  try {
+    await api("auth/logout", "POST");
+    showLogin();
+  } catch (error) {
+    notify(error.message, true);
+  }
+});
+api("auth/me").then(openWorkspace).catch((error) => showLogin(error.status === 401 ? "" : error.message));

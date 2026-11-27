@@ -1,12 +1,13 @@
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 
+from .auth import authorized, permissions
 from .database import rows, session
 from .schemas import (
     Identifier, Order, OrderLine, OrderStatus, Product, Shipment, ShipmentLine,
     ShipmentStatus, Stock, Supplier, Warehouse,
 )
 
-api = APIRouter(prefix="/api")
+api = APIRouter(prefix="/api", dependencies=[Depends(authorized)])
 
 
 def required(value):
@@ -63,7 +64,8 @@ register_catalog("/suppliers", "supplier", Supplier)
 
 
 @api.get("/dashboard", tags=["dashboard"])
-def dashboard():
+def dashboard(user=Depends(authorized)):
+    readable = permissions(user)["read"]
     with session() as cursor:
         cursor.execute("""
             SELECT (SELECT COUNT(*) FROM warehouse) AS warehouses,
@@ -81,7 +83,15 @@ def dashboard():
         by_warehouse = cursor.fetchall()
         cursor.execute("SELECT status, COUNT(*) AS total FROM shipment GROUP BY status")
         shipment_status = cursor.fetchall()
-    return {"metrics": metrics, "by_warehouse": by_warehouse, "shipment_status": shipment_status, "alerts": alert_rows(limit=5, status="Pending")}
+    if "shipments" not in readable:
+        del metrics["shipments"]
+        shipment_status = []
+    if "alerts" not in readable:
+        del metrics["alerts"]
+    if "warehouses" not in readable:
+        del metrics["warehouses"]
+    return {"metrics": metrics, "by_warehouse": by_warehouse, "shipment_status": shipment_status,
+            "alerts": alert_rows(limit=5, status="Pending") if "alerts" in readable else []}
 
 
 @api.get("/products/{product_id}/bom", tags=["product"])

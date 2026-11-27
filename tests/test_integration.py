@@ -1,17 +1,21 @@
 import json
 import os
 import unittest
+from http.cookiejar import CookieJar
 from urllib.error import HTTPError
-from urllib.request import Request, urlopen
+from urllib.request import HTTPCookieProcessor, Request, build_opener
 
 BASE = os.getenv("G3_TEST_URL", "http://127.0.0.1:8000")
 
 
-def request(path, method="GET", body=None):
+def request(path, method="GET", body=None, client=None, include_header=True):
     data = json.dumps(body).encode() if body is not None else None
-    req = Request(BASE + path, data=data, method=method, headers={"Content-Type": "application/json"})
+    headers = {"Content-Type": "application/json"}
+    if include_header:
+        headers["X-G3-Request"] = "1"
+    req = Request(BASE + path, data=data, method=method, headers=headers)
     try:
-        response = urlopen(req, timeout=10)
+        response = (client or build_opener()).open(req, timeout=10)
     except HTTPError as error:
         response = error
     with response:
@@ -22,10 +26,49 @@ def request(path, method="GET", body=None):
 
 
 class WarehouseIntegration(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.admin_username = os.getenv("G3_TEST_ADMIN_USERNAME")
+        cls.admin_password = os.getenv("G3_TEST_ADMIN_PASSWORD")
+        if not (cls.admin_username and cls.admin_password):
+            raise unittest.SkipTest("Set G3_TEST_ADMIN_USERNAME and G3_TEST_ADMIN_PASSWORD for a disposable database.")
+
+    def setUp(self):
+        self.client = build_opener(HTTPCookieProcessor(CookieJar()))
+        self.call("/api/auth/login", "POST", {"username": self.admin_username, "password": self.admin_password})
+
     def call(self, path, method="GET", body=None, expected=200):
-        status, result = request(path, method, body)
+        status, result = request(path, method, body, self.client)
         self.assertEqual(status, expected, result)
         return result
+
+    def test_authentication_and_roles(self):
+        self.assertEqual(request("/api/dashboard")[0], 401)
+        self.assertEqual(request("/api/auth/login", "POST", {}, include_header=False)[0], 422)
+        self.assertEqual(request("/api/auth/logout", "POST", client=self.client, include_header=False)[0], 403)
+        users = {}
+        for role in ("warehouse", "procurement", "logistics"):
+            username = "test_" + role
+            self.call("/api/users", "POST", {"username": username, "password": self.admin_password, "role": role}, 201)
+            client = build_opener(HTTPCookieProcessor(CookieJar()))
+            status, user = request("/api/auth/login", "POST", {"username": username, "password": self.admin_password}, client)
+            self.assertEqual((status, user["role"]), (200, role))
+            self.assertEqual(request("/api/inventory", client=client)[0], 200)
+            self.assertEqual(request("/api/users", client=client)[0], 403)
+            users[role] = (client, user)
+        procurement, user = users["procurement"]
+        warehouse, _ = users["warehouse"]
+        logistics, _ = users["logistics"]
+        self.assertEqual(request("/api/shipments/SH004/status", "PATCH", {"status": "In-Transit"}, procurement)[0], 403)
+        self.assertEqual(self.call("/api/shipments/SH004")["item"]["status"], "Pending")
+        self.assertEqual(request("/api/orders", client=warehouse)[0], 403)
+        self.assertEqual(request("/api/alerts", client=warehouse)[0], 200)
+        self.assertEqual(request("/api/shipments/SH004/status", "PATCH", {"status": "In-Transit"}, logistics, False)[0], 403)
+        self.assertEqual(request("/api/shipments/SH004/status", "PATCH", {"status": "In-Transit"}, logistics)[0], 200)
+        self.call(f"/api/users/{user['user_id']}/role", "PATCH", {"role": "warehouse"})
+        self.assertEqual(request("/api/orders", client=procurement)[0], 401)
+        self.assertEqual(request("/api/auth/logout", "POST", client=logistics)[0], 204)
+        self.assertEqual(request("/api/shipments", client=logistics)[0], 401)
 
     def stock(self, warehouse, product):
         items = self.call("/api/inventory?warehouse_id=" + warehouse)

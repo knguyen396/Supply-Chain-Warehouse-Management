@@ -6,10 +6,12 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pymysql import MySQLError
 
+from .auth import auth
 from .database import ROOT
 from .routes import api
 
 app = FastAPI(title="Warehouse Logistics API", version="1.0.0")
+app.include_router(auth)
 app.include_router(api)
 app.mount("/assets", StaticFiles(directory=ROOT / "frontend" / "assets"), name="assets")
 
@@ -52,7 +54,7 @@ async def database_error(request: Request, exc: MySQLError):
         1213: (409, "Có thao tác đồng thời trên cùng dữ liệu. Hãy thử lại."),
         1045: (503, "Không thể đăng nhập MySQL. Hãy kiểm tra cấu hình .env."),
         1049: (503, "Chưa tìm thấy schema. Hãy cài bộ SQL Phase 3."),
-        1146: (503, "Thiếu bảng hoặc view. Hãy cài bộ SQL Phase 3."),
+        1146: (503, "Thiếu bảng hoặc view. Hãy kiểm tra bộ SQL Phase 3 và 09_app_auth.sql."),
         2003: (503, "Không kết nối được MySQL. Hãy kiểm tra máy chủ và .env."),
     }
     if code not in messages:

@@ -8,7 +8,14 @@
   <script type="module" src="/assets/app.js"></script>
 </head>
 <body>
-  <div class="layout">
+  <section id="login-screen" class="login-screen" hidden>
+    <div class="panel login-panel">
+      <h1>Đăng nhập Kho vận G3</h1>
+      <p class="muted">Dùng tài khoản do quản trị viên cấp.</p>
+      <div id="login-form"></div>
+    </div>
+  </section>
+  <div class="layout" hidden>
     <a class="skip-link" href="#main-content">Đến nội dung chính</a>
     <header class="site-header">
       <div class="top">
@@ -18,7 +25,10 @@
           </span>
           <span>Kho vận G3<small>Quản lý chuỗi cung ứng</small></span>
         </a>
-        <a class="api-link" href="/docs" target="_blank" rel="noopener">Tài liệu API</a>
+        <div class="account-bar">
+          <span id="account-label"></span>
+          <button type="button" id="logout" class="secondary">Đăng xuất</button>
+        </div>
       </div>
       <div class="menu-bar">
         <nav id="navigation" aria-label="Menu chính"></nav>
